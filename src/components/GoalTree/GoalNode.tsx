@@ -105,10 +105,10 @@ export const GoalNode: React.FC<GoalNodeProps> = ({
            <button 
              onClick={(e) => { e.stopPropagation(); onToggleToday(); }}
              onPointerDown={(e) => e.stopPropagation()} 
-             className={`p-1 rounded-full hover:bg-white/10 transition ${goal.isToday ? 'text-amber-400' : 'text-white/20'}`}
+             className={`p-1.5 rounded-full hover:bg-white/10 transition ${goal.isToday ? 'text-amber-400' : 'text-white/20'}`}
              title="Toggle Today's Focus"
            >
-             <Sun size={14} className={goal.isToday ? "fill-amber-400" : ""} />
+             <Sun size={16} className={goal.isToday ? "fill-amber-400" : ""} />
            </button>
            
            <div className="flex gap-1 items-center">
@@ -129,19 +129,19 @@ export const GoalNode: React.FC<GoalNodeProps> = ({
                  onDelete(); 
                }}
                onPointerDown={(e) => e.stopPropagation()}
-               className="p-1 rounded-full hover:bg-white/10 transition text-white/20 hover:text-red-400"
+               className="p-1.5 rounded-full hover:bg-white/10 transition text-white/20 hover:text-red-400"
                title="Delete Goal"
              >
-               <Trash2 size={14} />
+               <Trash2 size={16} />
              </button>
-             {goal.isCompleted && <CheckCircle size={14} className="text-stone-500" />}
+             {goal.isCompleted && <CheckCircle size={16} className="text-stone-500" />}
              <button
                onClick={(e) => { e.stopPropagation(); onSetActive(); }}
                onPointerDown={(e) => e.stopPropagation()}
-               className={`p-1 rounded-full hover:bg-white/10 transition ${isActive ? 'text-green-400' : 'text-white/20'}`}
+               className={`p-1.5 rounded-full hover:bg-white/10 transition ${isActive ? 'text-green-400' : 'text-white/20'}`}
                title="Set as Active Goal"
              >
-               <Crosshair size={14} />
+               <Crosshair size={16} />
              </button>
            </div>
         </div>
@@ -197,19 +197,19 @@ export const GoalNode: React.FC<GoalNodeProps> = ({
           {isExpanded && (
             <div className="flex flex-col gap-1 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
               {(goal.subGoals || []).map((sg: SubGoal) => (
-                <div key={sg.id} className="flex items-center gap-2 text-xs group/sub px-1">
+                <div key={sg.id} className="flex items-center gap-2 text-xs group/sub px-1 py-1">
                     <button 
                         onClick={(e) => { e.stopPropagation(); toggleSubGoal(goal.id, sg.id); }}
-                        className={`hover:text-white transition ${sg.isCompleted ? 'text-green-400' : 'text-white/30'}`}
+                        className={`hover:text-white transition p-1 ${sg.isCompleted ? 'text-green-400' : 'text-white/30'}`}
                     >
-                        {sg.isCompleted ? <CheckSquare size={12} /> : <Square size={12} />}
+                        {sg.isCompleted ? <CheckSquare size={14} /> : <Square size={14} />}
                     </button>
                     <span className={`flex-1 text-left break-words ${sg.isCompleted ? 'line-through text-white/30' : 'text-white/80'}`}>{sg.content}</span>
                     <button 
                         onClick={(e) => { e.stopPropagation(); deleteSubGoal(goal.id, sg.id); }}
-                        className="opacity-0 group-hover/sub:opacity-100 text-white/20 hover:text-red-400 transition"
+                        className="opacity-0 group-hover/sub:opacity-100 text-white/20 hover:text-red-400 transition p-1"
                     >
-                        <X size={12} />
+                        <X size={14} />
                     </button>
                 </div>
               ))}

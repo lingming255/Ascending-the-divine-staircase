@@ -20,7 +20,9 @@ export const GoalCanvas: React.FC<GoalCanvasProps> = ({ onClose }) => {
     addGoal, 
     deleteGoal,
     focusedGoalId,
-    setFocusedGoalId
+    setFocusedGoalId,
+    scrollToId,
+    setScrollToId
   } = useGameStore();
 
   const [view, setView] = useState({ x: window.innerWidth / 2, y: 100, scale: 1 });
@@ -34,6 +36,44 @@ export const GoalCanvas: React.FC<GoalCanvasProps> = ({ onClose }) => {
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle ScrollToId
+  React.useEffect(() => {
+    if (scrollToId) {
+        // 1. Ensure the goal is visible (might be inside a focused subtree)
+        // If we are in focus mode, we might need to exit it OR check if target is inside.
+        // For simplicity, let's exit focus mode if target is not found in visibleGoals
+        // But visibleGoals depends on focusedGoalId.
+        
+        // Actually, let's just find it in global goals first.
+        const target = goals.find(g => g.id === scrollToId);
+        if (target) {
+            // Check if we need to change focus
+            // If focusedGoalId is set, check if target is a descendant
+            // If not, we might need to reset focus or switch focus.
+            // For now, let's just reset focus if not visible.
+            
+            // NOTE: visibleGoals is memoized. We can't easily check "is visible" synchronously here before render.
+            // So we'll force view update assuming it will be rendered.
+            
+            // To be safe, if we are in Drill-down, we might want to exit it to show the global node.
+            // setFocusedGoalId(null); // Optional: Force global view? User might find this jarring.
+            
+            // Calculate center position
+            const targetX = target.position.x;
+            const targetY = target.position.y;
+            
+            setView({
+                x: window.innerWidth / 2 - targetX * view.scale - 110 * view.scale,
+                y: window.innerHeight / 2 - targetY * view.scale - 50 * view.scale,
+                scale: view.scale
+            });
+            
+            // Clear the request
+            setScrollToId(null);
+        }
+    }
+  }, [scrollToId, goals, view.scale]);
 
   // Focus Mode Logic
   const visibleGoals = useMemo(() => {

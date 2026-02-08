@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { TimePhase, WeatherType } from '../types';
-import { ViewMode, StairStyle, EnvironmentType, ColorTheme } from '../store/gameStore';
+import { ViewMode, StairStyle, EnvironmentType, ColorTheme, useGameStore } from '../store/gameStore';
+import { TimelineOverlay } from './TimelineOverlay';
 
 interface AscensionCanvasProps {
   timePhase: TimePhase;
@@ -25,8 +26,53 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
   const requestRef = useRef<number>(0);
   const scrollRef = useRef<number>(0);
 
+  // Store connection for camera control
+    const { scrollToId, setScrollToId, goals, dashboardViewMode } = useGameStore();
+
+    // Handle ScrollToId
+  useEffect(() => {
+    if (scrollToId) {
+        // Find the goal
+        const targetGoal = goals.find(g => g.id === scrollToId);
+        if (targetGoal) {
+            // Note: AscensionCanvas currently renders a procedural background (Ascension Mode)
+            // It does NOT render the Goal Tree nodes. GoalTree is rendered by GoalCanvas.tsx.
+            // This component is the background visualizer.
+            // Wait, the User Request is about "Link to Canvas interface's belonging goal".
+            // The Goal Tree is in `GoalCanvas.tsx`.
+            // So I should be modifying `GoalCanvas.tsx` instead of `AscensionCanvas.tsx` for the camera movement?
+            // Let's check `GoalCanvas.tsx`.
+        }
+    }
+  }, [scrollToId, goals]);
+
   const backgroundSeed = useRef<number[]>([]);
     const farBackgroundSeed = useRef<number[]>([]);
+
+    // Better Noise Implementation:
+    // Create a static noise canvas once
+    const staticNoise = useRef<HTMLCanvasElement | null>(null);
+    useEffect(() => {
+        const cvs = document.createElement('canvas');
+        cvs.width = 512;
+        cvs.height = 512;
+        const c = cvs.getContext('2d');
+        if (c) {
+            const idata = c.createImageData(512, 512);
+            const buffer32 = new Uint32Array(idata.data.buffer);
+            for (let i = 0; i < buffer32.length; i++) {
+                // ABGR order on little-endian
+                // 15 alpha (out of 255) => ~6% opacity
+                buffer32[i] = (Math.random() * 255) | 0; // Random noise
+                // We want grayscale noise: R=G=B.
+                const val = (Math.random() * 255) | 0;
+                // Alpha: 15
+                buffer32[i] = (15 << 24) | (val << 16) | (val << 8) | val;
+            }
+            c.putImageData(idata, 0, 0);
+            staticNoise.current = cvs;
+        }
+    }, []);
 
     useEffect(() => {
         // Initialize background seed
@@ -139,33 +185,57 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
         // Use stair colors as base but shift hue/saturation for background to ensure harmony
         // Stair Front Color is the "Main" color
         
-        let bgBaseColor = '#64748b'; // Default Slate-500
-        let colorFar = '#94a3b8';
+        let bgBaseColor = '#475569'; // Default Slate-600
+        let colorFar = '#64748b';
 
         if (colorTheme === 'bamboo') {
-            // Bamboo Theme
+            // Bamboo Theme (Sage)
             if (stairStyle === 'ethereal') {
-                 bgBaseColor = night ? '#064e3b' : '#a7f3d0'; // Emerald-950 : Emerald-200
+                 bgBaseColor = night ? '#1a2920' : '#8fa894'; // Deep Moss : Sage 400
             } else {
-                 bgBaseColor = night ? '#065f46' : '#6ee7b7'; // Emerald-900 : Emerald-300
+                 bgBaseColor = night ? '#25382c' : '#758f7a'; // Moss : Sage 500
             }
-            colorFar = night ? '#022c22' : '#d1fae5'; // Emerald-950 : Emerald-100
+            colorFar = night ? '#1a2920' : '#a4bba8'; // Sage 300
         } else if (colorTheme === 'sunset') {
-            // Sunset Theme
+            // Sunset Theme (Terracotta)
             if (stairStyle === 'ethereal') {
-                 bgBaseColor = night ? '#450a0a' : '#fed7aa'; // Red-950 : Orange-200
+                 bgBaseColor = night ? '#3a2218' : '#e6ccb2'; // Coffee : Warm Beige
             } else {
-                 bgBaseColor = night ? '#7f1d1d' : '#fdba74'; // Red-900 : Orange-300
+                 bgBaseColor = night ? '#4f2e22' : '#ddb892'; // Leather : Sand
             }
-            colorFar = night ? '#450a0a' : '#ffedd5'; // Red-950 : Orange-100
+            colorFar = night ? '#3a2218' : '#ede0d4'; // Light Beige
+        } else if (colorTheme === 'ocean') {
+            // Ocean Theme (Muted Blue)
+            if (stairStyle === 'ethereal') {
+                 bgBaseColor = night ? '#0f1c26' : '#9bb0c1'; // Deep Sea : Muted Blue
+            } else {
+                 bgBaseColor = night ? '#162633' : '#7a94a8'; // Dark Blue : Steel Blue
+            }
+            colorFar = night ? '#0f1c26' : '#b5c7d6'; // Light Steel
+        } else if (colorTheme === 'desert') {
+            // Desert Theme (Sandstone)
+            if (stairStyle === 'ethereal') {
+                 bgBaseColor = night ? '#292524' : '#e3d5ca'; // Warm Dark Grey : Bone
+            } else {
+                 bgBaseColor = night ? '#44403c' : '#d6ccc2'; // Stone : Warm Grey
+            }
+            colorFar = night ? '#292524' : '#f5ebe0'; // Light Bone
+        } else if (colorTheme === 'city') {
+            // City Theme (Cool Grey)
+            if (stairStyle === 'ethereal') {
+                 bgBaseColor = night ? '#111827' : '#d1d5db'; // Grey 900 : Grey 300
+            } else {
+                 bgBaseColor = night ? '#1f2937' : '#9ca3af'; // Grey 800 : Grey 400
+            }
+            colorFar = night ? '#111827' : '#e5e7eb'; // Grey 200
         } else {
-            // Midnight Theme (Default)
+            // Midnight Theme (Default Deep Space)
             if (stairStyle === 'ethereal') {
-                 bgBaseColor = night ? '#1e1b4b' : '#c7d2fe'; // Indigo-950 : Indigo-200
+                 bgBaseColor = night ? '#020617' : '#94a3b8'; // Space : Slate 400
             } else {
-                 bgBaseColor = night ? '#0f172a' : '#94a3b8'; // Slate-900 : Slate-400
+                 bgBaseColor = night ? '#0f172a' : '#64748b'; // Slate 900 : Slate 500
             }
-            colorFar = night ? '#020617' : '#e2e8f0'; // Slate-950 : Slate-200
+            colorFar = night ? '#020617' : '#cbd5e1'; // Slate 300
         }
         
         const colorNear = bgBaseColor;
@@ -176,41 +246,26 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
         
         // 1. Far Layer (Slower, lighter/more transparent, scaled up slightly)
         // Using a lower opacity for "atmospheric perspective"
-        ctx.globalAlpha = 0.4;
+        ctx.globalAlpha = 0.3; // Reduced opacity for subtle look
         drawLayer(farBackgroundSeed.current, colorFar, 0.5, 1.2, -50);
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.6; // Reduced opacity
 
         // 2. Mid Layer (Standard speed, standard color)
         drawLayer(backgroundSeed.current, colorNear, 1.0, 1.0, 0);
         ctx.globalAlpha = 1.0;
     };
 
-    const drawStairs = (scroll: number) => {
+    const drawStairs = (scroll: number, time: number) => {
       // Dimensions based on style
       let stepWidth = 300;
       let stepHeight = 40;
       let stepDepth = viewMode === 'diagonal' ? 40 : 0;
       
-      if (stairStyle === 'ethereal') {
-          stepWidth = 500;
-          stepHeight = 60;
-          stepDepth = viewMode === 'diagonal' ? 50 : 0;
-      } else if (stairStyle === 'solid') {
-          stepWidth = 400;
-          stepHeight = 80;
-          stepDepth = viewMode === 'diagonal' ? 60 : 0;
-      }
-
       // 核心算法：利用斜率计算位移向量
       // 1. 定义台阶的几何尺寸（高度与深度）
       const stepH = stepHeight;
       const stepD = stepDepth;
       
-      // 2. 计算斜率 (Slope) = dx / dy
-      // 当我们向上攀登时，视觉上台阶是向后退的
-      // 对于对角线视角，台阶分布在左上方，所以后退方向应为右下方 (+x, +y)
-      // const slope = stepH > 0 ? stepD / stepH : 0; (Unused, removed for clean build)
-
       const centerX = canvas.width / 2;
       const startY = canvas.height - 100;
       const visibleSteps = Math.ceil(canvas.height / stepHeight) + 5;
@@ -226,46 +281,82 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
       const endStepIndex = startStepIndex + visibleSteps + 2;
 
       const night = timePhase === 'night';
-      let colorFront = '#64748b';
-      let colorTop = '#e2e8f0';
+      let colorFront = '#475569';
+      let colorTop = '#94a3b8';
       let colorSide = '#334155';
-      let colorMarker = '#f59e0b'; // Amber
+      let colorMarker = '#d97706'; // Muted Amber
 
-      // Define Color Palettes
+      // Define Color Palettes (Low Profile)
       if (colorTheme === 'bamboo') {
-          // Bamboo: Green/Stone/Nature
-          colorMarker = '#10b981'; // Emerald
+          // Bamboo: Sage/Moss
+          colorMarker = '#5a7c65'; // Muted Green
           if (night) {
-             colorFront = '#064e3b'; // Emerald 900
-             colorTop = '#065f46'; // Emerald 800
-             colorSide = '#022c22'; // Emerald 950
+             colorFront = '#1a2920'; // Deep Moss
+             colorTop = '#25382c'; // Moss
+             colorSide = '#0f1c12'; // Darkest Moss
           } else {
-             colorFront = '#34d399'; // Emerald 400
-             colorTop = '#6ee7b7'; // Emerald 300
-             colorSide = '#10b981'; // Emerald 500
+             colorFront = '#758f7a'; // Sage 500
+             colorTop = '#8fa894'; // Sage 400
+             colorSide = '#5a7c65'; // Sage 600
           }
       } else if (colorTheme === 'sunset') {
-          // Sunset: Red/Orange/Sand
-          colorMarker = '#f43f5e'; // Rose
+          // Sunset: Clay/Terracotta
+          colorMarker = '#9c6644'; // Leather
           if (night) {
-             colorFront = '#7f1d1d'; // Red 900
-             colorTop = '#991b1b'; // Red 800
-             colorSide = '#450a0a'; // Red 950
+             colorFront = '#4f2e22'; // Coffee
+             colorTop = '#613b2d'; // Light Coffee
+             colorSide = '#3a2218'; // Dark Coffee
           } else {
-             colorFront = '#fb923c'; // Orange 400
-             colorTop = '#fdba74'; // Orange 300
-             colorSide = '#f97316'; // Orange 500
+             colorFront = '#b08968'; // Clay
+             colorTop = '#ddb892'; // Sand
+             colorSide = '#9c6644'; // Leather
+          }
+      } else if (colorTheme === 'ocean') {
+          // Ocean: Muted Blue/Steel
+          colorMarker = '#51718a'; // Steel Blue
+          if (night) {
+             colorFront = '#162633'; // Dark Blue
+             colorTop = '#223544'; // Lighter Dark Blue
+             colorSide = '#0f1c26'; // Deep Sea
+          } else {
+             colorFront = '#51718a'; // Steel Blue
+             colorTop = '#7a94a8'; // Light Steel
+             colorSide = '#3b5266'; // Dark Steel
+          }
+      } else if (colorTheme === 'desert') {
+          // Desert: Sandstone/Stone
+          colorMarker = '#a89f91'; // Stone
+          if (night) {
+             colorFront = '#44403c'; // Warm Dark Grey
+             colorTop = '#57534e'; // Lighter Warm Grey
+             colorSide = '#292524'; // Darkest Warm Grey
+          } else {
+             colorFront = '#c5baaf'; // Sandstone
+             colorTop = '#d6ccc2'; // Warm Grey
+             colorSide = '#a89f91'; // Stone
+          }
+      } else if (colorTheme === 'city') {
+          // City: Cool Grey
+          colorMarker = '#6b7280'; // Grey 500
+          if (night) {
+             colorFront = '#1f2937'; // Grey 800
+             colorTop = '#374151'; // Grey 700
+             colorSide = '#111827'; // Grey 900
+          } else {
+             colorFront = '#6b7280'; // Grey 500
+             colorTop = '#9ca3af'; // Grey 400
+             colorSide = '#4b5563'; // Grey 600
           }
       } else {
-          // Midnight (Default): Blue/Slate
+          // Midnight (Default): Slate/Space
           if (night) {
              colorFront = '#0f172a'; // Slate 900
              colorTop = '#1e293b'; // Slate 800
              colorSide = '#020617'; // Slate 950
           } else {
-             colorFront = '#64748b'; // Slate 500
-             colorTop = '#94a3b8'; // Slate 400
-             colorSide = '#475569'; // Slate 600
+             colorFront = '#475569'; // Slate 600
+             colorTop = '#64748b'; // Slate 500
+             colorSide = '#334155'; // Slate 700
           }
       }
 
@@ -280,6 +371,9 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
           let r=0, g=0, b=0;
           if (colorTheme === 'bamboo') { r=50; g=200; b=150; } // Teal-ish
           else if (colorTheme === 'sunset') { r=250; g=150; b=100; } // Orange-ish
+          else if (colorTheme === 'ocean') { r=56; g=189; b=248; } // Sky Blue
+          else if (colorTheme === 'desert') { r=251; g=191; b=36; } // Amber
+          else if (colorTheme === 'city') { r=168; g=85; b=247; } // Purple
           else { r=100; g=150; b=255; } // Blue-ish
 
           colorFront = night ? `rgba(${r}, ${g}, ${b}, ${opacity})` : `rgba(${r}, ${g}, ${b}, ${opacity})`;
@@ -288,8 +382,6 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
           
           ctx.lineWidth = 1;
           ctx.strokeStyle = night ? `rgba(255,255,255,${strokeOp})` : `rgba(0,0,0,${strokeOp})`;
-      } else if (stairStyle === 'solid') {
-           // Solid uses the palette defined above directly
       }
 
       // 遍历绝对台阶索引 (Absolute Step Index)
@@ -298,10 +390,14 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
         // 如果 i = 10, currentStepProgress = 10.5, 则 relativeIndex = -0.5 (该台阶已过了一半)
         const relativeIndex = i - currentStepProgress;
 
+        // Ambient Float Animation
+        // Use time and index to create a wave
+        const floatOffset = Math.sin(time * 0.002 + i * 0.5) * 5;
+
         // 计算屏幕坐标
         // y: 随着 relativeIndex 减小 (向上爬), y 增大 (向下移)
         // startY 是基准线
-        const y = startY - (relativeIndex * stepH);
+        const y = startY - (relativeIndex * stepH) + floatOffset;
         
         // x: 随着 relativeIndex 减小, x 增大 (向右移, 模拟向左上方爬)
         const x = centerX - (relativeIndex * stepD); 
@@ -311,16 +407,30 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
             ctx.beginPath();
             pathFn();
             ctx.closePath();
+            
+            // Soft Glow Logic
+            if (stairStyle === 'ethereal') {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = fill;
+            } else {
+                // Minimal (Default) Glow
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = fill;
+            }
+
             ctx.fillStyle = fill;
             ctx.fill();
-            if (stairStyle === 'ethereal') ctx.stroke();
             
-            // Edge Highlight for definition
-            if (stairStyle === 'solid') {
-                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            if (stairStyle === 'ethereal') {
+                ctx.stroke();
+            } else {
+                // Minimal (Default) Stroke
                 ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)'; // Subtle white stroke
                 ctx.stroke();
             }
+            
+            ctx.shadowBlur = 0; // Reset
         };
 
         if (viewMode === 'vertical') {
@@ -351,7 +461,7 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
             // Add slight random width variation for "hand-built" feel
             // Hash function based on index i
             const pseudoRandom = Math.sin(i * 9999);
-            const widthVar = stairStyle === 'solid' ? pseudoRandom * 10 : 0;
+            const widthVar = 0; // Removed solid variation
             const currentWidth = stepWidth + widthVar;
 
             drawFace(() => {
@@ -372,23 +482,6 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
                 ctx.lineTo(x + currentWidth + 20, y - 20 + stepHeight);
                 ctx.lineTo(x + currentWidth, y + stepHeight);
             }, colorSide);
-
-            // Procedural Texture (Scratches/Details on Side)
-            if (stairStyle === 'solid') {
-                ctx.save();
-                ctx.beginPath();
-                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-                ctx.lineWidth = 2;
-                // Draw 3 vertical lines based on random hash
-                for(let k=0; k<3; k++) {
-                   const lineX = x + currentWidth + 5 + (k*5);
-                   const lineY = y + 5 + (pseudoRandom * 20 + k*10) % (stepHeight - 10);
-                   ctx.moveTo(lineX, lineY);
-                   ctx.lineTo(lineX, lineY + 10);
-                }
-                ctx.stroke();
-                ctx.restore();
-            }
         }
         
         if (i % 24 === 0) {
@@ -402,21 +495,22 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
       }
     };
 
-    const drawWeather = () => {
-        if (weather === 'clear') return;
+    const drawWeather = (time: number) => {
+        // Ambient Particles (Always visible, but subtle in clear weather)
+        // We reuse the 'particles' array but treat them differently based on weather
         
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1;
 
-        particles.forEach(p => {
+        particles.forEach((p, index) => {
             if (weather === 'rain') {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.beginPath();
                 ctx.moveTo(p.x, p.y);
                 ctx.lineTo(p.x, p.y + 10);
                 ctx.stroke();
                 p.y += p.speed * 2;
             } else if (weather === 'snow') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -428,24 +522,63 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
                 ctx.arc(p.x, p.y, p.size * 20, 0, Math.PI * 2);
                 ctx.fill();
                 p.x += p.speed / 10;
+            } else {
+                // Clear weather: Ambient Dust Motes / Fireflies
+                // Slow floating, breathing opacity
+                const opacity = (Math.sin(time * 0.001 + index) + 1) / 2 * 0.3; // 0.0 to 0.3
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Brownian-like slow motion
+                p.y -= p.speed * 0.05; // Slowly float up
+                p.x += Math.sin(time * 0.0005 + index) * 0.2;
             }
 
-            if (p.y > canvas.height) p.y = -10;
-            if (p.x > canvas.width) p.x = -10;
-            if (p.x < -10) p.x = canvas.width;
+            // Boundary checks
+            if (p.y > canvas.height + 50) p.y = -10;
+            if (p.y < -50) p.y = canvas.height + 10;
+            if (p.x > canvas.width + 50) p.x = -10;
+            if (p.x < -50) p.x = canvas.width + 10;
         });
     };
 
-    const render = (_time: number) => {
+    // Generate Noise Pattern - REMOVED DEAD CODE
+
+    const drawNoise = () => {
+        if (!staticNoise.current) return;
+        
+        ctx.save();
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.globalAlpha = 0.5;
+        
+        // Tiling the noise
+        const pat = ctx.createPattern(staticNoise.current, 'repeat');
+        if (pat) {
+            // Shift pattern slightly every frame to make it "alive"
+            const offsetX = Math.random() * 100;
+            const offsetY = Math.random() * 100;
+            ctx.translate(offsetX, offsetY);
+            ctx.fillStyle = pat;
+            ctx.fillRect(-offsetX, -offsetY, canvas.width + offsetX, canvas.height + offsetY);
+        }
+        
+        ctx.restore();
+    };
+
+    const render = (time: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Draw layers
       drawBackground();
       
       scrollRef.current += 0.1; // Reduced speed (was 0.5)
-      drawStairs(scrollRef.current);
-      drawWeather();
+      drawStairs(scrollRef.current, time); // Pass time for float animation
+      drawWeather(time); // Pass time for particles
       
+      drawNoise(); // Film Grain Overlay
+
       requestRef.current = requestAnimationFrame(render);
     };
 
@@ -457,7 +590,12 @@ const AscensionCanvas: React.FC<AscensionCanvasProps> = ({
     };
   }, [timePhase, weather, viewMode, stairStyle, environment]);
 
-  return <canvas ref={canvasRef} className={`absolute top-0 left-0 w-full h-full pointer-events-none ${className}`} />;
+  return (
+    <div className={`absolute top-0 left-0 w-full h-full ${className}`}>
+        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
+        {dashboardViewMode === 'timeline' && <TimelineOverlay onOpenMap={() => {}} />}
+    </div>
+  );
 };
 
 export default AscensionCanvas;

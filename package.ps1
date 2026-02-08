@@ -17,12 +17,14 @@ if (Test-Path $releaseDir) {
         Write-Warning "Could not remove existing directory completely. Trying to overwrite..."
     }
 }
-New-Item -ItemType Directory -Path $appDir -Force | Out-Null
-
 # Copy Electron Binaries
 Write-Host "Copying Electron binaries..."
 $electronPath = "node_modules/electron/dist"
-Copy-Item -Path "$electronPath/*" -Destination $releaseDir -Recurse
+New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+Copy-Item -Path "$electronPath/*" -Destination $releaseDir -Recurse -Force
+
+# Create App Directory
+New-Item -ItemType Directory -Path $appDir -Force | Out-Null
 
 # Rename Executable
 Rename-Item -Path "$releaseDir/electron.exe" -NewName "AscensionStairs.exe"

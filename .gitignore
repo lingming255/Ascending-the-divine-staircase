@@ -29,3 +29,7 @@ AscensionStairs-Software/
 AscensionStairs-Release/
 dist-electron/
 *.zip
+
+# Environment Variables
+.env
+.env.local

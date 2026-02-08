@@ -1,8 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { generateId } from '../utils/helpers';
+import { generateId, getLocalDateString } from '../utils/helpers';
 import { Goal, Priority, SubGoal } from '../types';
 export type { Goal, Priority, SubGoal };
+
+export interface HUDItem {
+  type: 'goal' | 'subgoal';
+  id: string;
+  parentId?: string; // If type is subgoal, this is the goalId
+}
 
 export interface DailyLog {
   id: string;
@@ -14,21 +20,27 @@ export interface DailyLog {
 }
 
 export type ViewMode = 'diagonal' | 'vertical';
-export type StairStyle = 'minimal' | 'ethereal' | 'solid';
+export type StairStyle = 'minimal' | 'ethereal';
 export type EnvironmentType = 'countryside' | 'city' | 'mountain' | 'desert' | 'beach' | 'rainforest';
-export type ColorTheme = 'midnight' | 'bamboo' | 'sunset';
+export type ColorTheme = 'midnight' | 'bamboo' | 'sunset' | 'ocean' | 'desert' | 'city';
 
 export interface GameState {
   goals: Goal[];
   activeGoalId: string | null;
   focusedGoalId: string | null; // For Focus Mode (Drill-down)
+  scrollToId: string | null; // Transient state for camera movement
   taskOrder: string[]; // Global custom sort order
+  hudItems: HUDItem[]; // Manual Focus List (Scratchpad)
   dailyLogs: DailyLog[];
   weatherOverride: string | null;
   viewMode: ViewMode;
   stairStyle: StairStyle;
   environment: EnvironmentType;
   colorTheme: ColorTheme;
+  dashboardViewMode: 'stairs' | 'timeline';
+  timelineDate: string; // YYYY-MM-DD
+  highlightedGoalId: string | null; // For Jump-to-Task
+  invalidDragId: string | null; // Transient state for invalid drag feedback
   
   // Goal Actions
   addGoal: (content: string, parentId?: string | null, position?: { x: number, y: number }) => string;
@@ -37,7 +49,22 @@ export interface GameState {
   unlinkGoal: (id: string) => void;
   setActiveGoal: (id: string | null) => void;
   setFocusedGoalId: (id: string | null) => void;
+  setScrollToId: (id: string | null) => void;
   setTaskOrder: (order: string[]) => void;
+  setGoalSchedule: (id: string, time: string | null, duration?: number) => void;
+  scheduleSubGoal: (goalId: string, subGoalId: string, time: string | null, duration?: number) => void;
+  unscheduleSubGoal: (goalId: string, subGoalId: string) => void;
+  setDashboardViewMode: (mode: 'stairs' | 'timeline') => void;
+  setTimelineDate: (date: string) => void;
+  setHighlightedGoalId: (id: string | null) => void;
+  setInvalidDragId: (id: string | null) => void;
+  
+  // HUD Actions
+  addToHud: (item: HUDItem) => void;
+  removeFromHud: (id: string) => void;
+  isHudItem: (id: string) => boolean;
+  reorderHudItems: (newItems: HUDItem[]) => void;
+
   setGoalPriority: (id: string, priority: Priority) => void;
   completeGoal: (id: string) => void;
   toggleGoalToday: (id: string) => void;
@@ -46,6 +73,7 @@ export interface GameState {
   addSubGoal: (goalId: string, content: string) => void;
   toggleSubGoal: (goalId: string, subGoalId: string) => void;
   deleteSubGoal: (goalId: string, subGoalId: string) => void;
+  reorderSubGoals: (goalId: string, newSubGoals: SubGoal[]) => void;
   
   addDailyLog: (content: string) => void;
   setWeatherOverride: (weather: string | null) => void;
@@ -67,13 +95,19 @@ export const useGameStore = create<GameState>()(
       goals: [],
       activeGoalId: null,
       focusedGoalId: null,
+      scrollToId: null,
       taskOrder: [],
+      hudItems: [],
       dailyLogs: [],
       weatherOverride: null,
       viewMode: 'diagonal',
       stairStyle: 'minimal',
       environment: 'countryside',
       colorTheme: 'midnight',
+      dashboardViewMode: 'stairs',
+      timelineDate: getLocalDateString(),
+      highlightedGoalId: null,
+      invalidDragId: null,
 
       addGoal: (content, parentId = null, position = { x: 0, y: 0 }) => {
         const { goals } = get();
@@ -146,6 +180,16 @@ export const useGameStore = create<GameState>()(
         });
       },
 
+      reorderSubGoals: (goalId, newSubGoals) => {
+        const { goals } = get();
+        set({
+            goals: goals.map(g => {
+                if (g.id !== goalId) return g;
+                return { ...g, subGoals: newSubGoals };
+            })
+        });
+      },
+
       updateGoal: (id, updates) => {
         const { goals } = get();
         set({
@@ -190,8 +234,86 @@ export const useGameStore = create<GameState>()(
         set({ focusedGoalId: id });
       },
 
+      setScrollToId: (id) => {
+        set({ scrollToId: id });
+      },
+
       setTaskOrder: (order) => {
         set({ taskOrder: order });
+      },
+
+      setGoalSchedule: (id, time, duration = 60) => {
+        const { goals } = get();
+        set({
+            goals: goals.map(g => g.id === id ? { ...g, scheduledTime: time, duration: time ? duration : undefined } : g)
+        });
+      },
+
+      scheduleSubGoal: (goalId, subGoalId, time, duration = 60) => {
+        const { goals } = get();
+        set({
+            goals: goals.map(g => {
+                if (g.id !== goalId) return g;
+                return {
+                    ...g,
+                    subGoals: (g.subGoals || []).map(sg => 
+                        sg.id === subGoalId ? { ...sg, scheduledTime: time, duration: time ? duration : undefined } : sg
+                    )
+                };
+            })
+        });
+      },
+
+      unscheduleSubGoal: (goalId, subGoalId) => {
+        const { goals } = get();
+        set({
+            goals: goals.map(g => {
+                if (g.id !== goalId) return g;
+                return {
+                    ...g,
+                    subGoals: (g.subGoals || []).map(sg => 
+                        sg.id === subGoalId ? { ...sg, scheduledTime: null, duration: undefined } : sg
+                    )
+                };
+            })
+        });
+      },
+
+      setDashboardViewMode: (mode) => {
+        set({ dashboardViewMode: mode });
+      },
+
+      setTimelineDate: (date) => {
+        set({ timelineDate: date });
+      },
+
+      setHighlightedGoalId: (id) => {
+        set({ highlightedGoalId: id });
+      },
+
+      setInvalidDragId: (id) => {
+        set({ invalidDragId: id });
+      },
+
+      addToHud: (item) => {
+        const { hudItems } = get();
+        if (!hudItems.some(i => i.id === item.id)) {
+            set({ hudItems: [...hudItems, item] });
+        }
+      },
+
+      removeFromHud: (id) => {
+        const { hudItems } = get();
+        set({ hudItems: hudItems.filter(i => i.id !== id) });
+      },
+
+      isHudItem: (id) => {
+        const { hudItems } = get();
+        return hudItems.some(i => i.id === id);
+      },
+
+      reorderHudItems: (newItems) => {
+        set({ hudItems: newItems });
       },
 
       setGoalPriority: (id, priority) => {
@@ -211,13 +333,21 @@ export const useGameStore = create<GameState>()(
             return; 
         }
 
+        // Determine next active goal (Parent)
+        const parentId = goal?.parentIds?.[0];
+        // If the completed goal was active, or if we want to auto-switch to parent regardless
+        // The user requirement: "automatically find parent and activate"
+        // We prioritize parent. If no parent, and we were active, we clear active.
+        // If no parent and we were NOT active, we keep current active.
+        const nextActiveId = parentId ? parentId : (activeGoalId === id ? null : activeGoalId);
+
         set({
           goals: goals.map(g => g.id === id ? { 
             ...g, 
             isCompleted: true, 
             completedAt: new Date().toISOString() 
           } : g),
-          activeGoalId: activeGoalId === id ? null : activeGoalId 
+          activeGoalId: nextActiveId 
         });
       },
       
@@ -265,10 +395,18 @@ export const useGameStore = create<GameState>()(
       exportData: () => {
         const state = get();
         const data = {
-          version: '2.0',
+          version: '2.1', // Bump version for new fields
           goals: state.goals,
           activeGoalId: state.activeGoalId,
           dailyLogs: state.dailyLogs,
+          taskOrder: state.taskOrder,
+          hudItems: state.hudItems,
+          dashboardViewMode: state.dashboardViewMode,
+          viewMode: state.viewMode,
+          stairStyle: state.stairStyle,
+          environment: state.environment,
+          colorTheme: state.colorTheme,
+          weatherOverride: state.weatherOverride,
           exportedAt: new Date().toISOString(),
           // Legacy fields support (optional)
           currentGoal: state.activeGoalId ? state.goals.find(g => g.id === state.activeGoalId)?.content : null,
@@ -302,11 +440,14 @@ export const useGameStore = create<GameState>()(
             goals: data.goals || [],
             activeGoalId: data.activeGoalId || null,
             dailyLogs: data.dailyLogs || [],
-            weatherOverride: data.weatherOverride || null,
+            taskOrder: data.taskOrder || [],
+            hudItems: data.hudItems || [],
+            dashboardViewMode: data.dashboardViewMode || 'stairs',
             viewMode: data.viewMode || 'diagonal',
             stairStyle: data.stairStyle || 'minimal',
             environment: data.environment || 'countryside',
             colorTheme: data.colorTheme || 'midnight',
+            weatherOverride: data.weatherOverride || null,
           });
           return true;
         } catch (e) {
@@ -318,7 +459,18 @@ export const useGameStore = create<GameState>()(
     {
       name: 'ascension-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      partialize: (state) => {
+        // Exclude transient state from persistence
+        const { 
+            timelineDate, 
+            scrollToId, 
+            highlightedGoalId, 
+            invalidDragId, 
+            ...persistedState 
+        } = state;
+        return persistedState;
+      },
+      version: 10,
       migrate: (persistedState: any, version) => {
         // Handle migration to version 3 first (existing logic)
         let state = persistedState as any;
@@ -393,6 +545,36 @@ export const useGameStore = create<GameState>()(
         if (state.version === 4) {
             state.taskOrder = state.taskOrder || [];
             state.version = 5;
+        }
+
+        // Migration from v5 to v6 (Add hudItems)
+        if (state.version === 5) {
+            state.hudItems = state.hudItems || [];
+            state.version = 6;
+        }
+
+        // Migration from v6 to v7 (Add dashboardViewMode)
+        if (state.version === 6) {
+            state.dashboardViewMode = 'stairs';
+            state.version = 7;
+        }
+
+        // Migration from v7 to v8 (Add timelineDate)
+        if (state.version === 7) {
+            state.timelineDate = getLocalDateString();
+            state.version = 8;
+        }
+
+        // Migration from v8 to v9 (Add scheduledTime/duration to subgoals)
+        if (state.version === 8) {
+            // No strict data migration needed as fields are optional, but bumping version for consistency
+            state.version = 9;
+        }
+        
+        // Migration from v9 to v10 (Fix timelineDate UTC issue)
+        if (state.version === 9) {
+            state.timelineDate = getLocalDateString();
+            state.version = 10;
         }
         
         return state as GameState;

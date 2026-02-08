@@ -1,0 +1,168 @@
+{
+  "version": "2.1",
+  "goals": [
+    {
+      "id": "81b92344-31b5-4646-9c80-5a1555a556e3",
+      "content": "第一阶段：系统重装与去噪 (Weeks 1-3)",
+      "parentIds": [],
+      "isCompleted": false,
+      "createdAt": "2026-02-08T19:39:52.104Z",
+      "isToday": false,
+      "priority": "P0",
+      "startDate": "2026-02-08",
+      "subGoals": [
+        {
+          "id": "d9a18f9b-69c7-49c8-b07b-5599992463f2",
+          "content": "睡眠优化：确保每晚 7.5 小时 (REM 保护)",
+          "isCompleted": false
+        },
+        {
+          "id": "ea546dd3-b6ea-4894-b23e-cf99c3b87be5",
+          "content": "英语：3500 词暴力刷第一轮 (艾宾浩斯)",
+          "isCompleted": false
+        },
+        {
+          "id": "4e4234a3-43e7-46af-a2d5-4571303ca6f2",
+          "content": "生物/化学：教材地毯式扫描 (建立抽认卡)",
+          "isCompleted": false
+        },
+        {
+          "id": "58f7c221-e279-4778-b4f8-76d12fa4c765",
+          "content": "饮食调整：戒断高糖，维持血糖稳态",
+          "isCompleted": false
+        }
+      ],
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "e9306f77-7931-4336-9298-9db604bdf389",
+      "content": "第二阶段：模块化攻坚 (Weeks 4-10)",
+      "parentIds": [
+        "81b92344-31b5-4646-9c80-5a1555a556e3"
+      ],
+      "isCompleted": false,
+      "createdAt": "2026-02-08T19:39:52.104Z",
+      "isToday": false,
+      "priority": "P1",
+      "startDate": "2026-02-08",
+      "subGoals": [
+        {
+          "id": "62af0a95-3046-4dda-80de-ffd5c071b027",
+          "content": "数学：三角函数与数列 (拿满基础分)",
+          "isCompleted": false
+        },
+        {
+          "id": "ab618a1d-b0d3-484a-89d0-782961285f51",
+          "content": "物理：力学合成与电磁场模型化",
+          "isCompleted": false
+        },
+        {
+          "id": "96889320-b71e-4a3d-a8d8-2565f34e3d17",
+          "content": "英语：3500 词第二轮 + 语法填空特训",
+          "isCompleted": false
+        },
+        {
+          "id": "b2c8c0e6-eef3-479b-b550-fc0b5b081ee1",
+          "content": "错题本 2.0：启动错误归因记录",
+          "isCompleted": false
+        }
+      ],
+      "position": {
+        "x": 300,
+        "y": -200
+      }
+    },
+    {
+      "id": "ea5f4985-a5f6-41a2-89c2-78961fe087d6",
+      "content": "第三阶段：全真模拟与良品率 (Weeks 11-14)",
+      "parentIds": [
+        "e9306f77-7931-4336-9298-9db604bdf389"
+      ],
+      "isCompleted": false,
+      "createdAt": "2026-02-08T19:39:52.104Z",
+      "isToday": false,
+      "priority": "P1",
+      "startDate": "2026-02-08",
+      "subGoals": [
+        {
+          "id": "9f39aa09-a7b6-4f0d-a8e3-9ac5a98df20c",
+          "content": "限时训练：所有作业按考试标准倒计时",
+          "isCompleted": false
+        },
+        {
+          "id": "75caf942-d18e-4a91-a6a5-c3777c025dde",
+          "content": "理综：选择题 45 分钟极速训练",
+          "isCompleted": false
+        },
+        {
+          "id": "e46b2802-cc97-40c6-a426-086bdb48f5d4",
+          "content": "数学：舍弃压轴题，确保中档题 100% 正确率",
+          "isCompleted": false
+        },
+        {
+          "id": "a4433374-83a9-4b02-b4c3-c4f86cd51245",
+          "content": "英语：3500 词第三轮 (查漏补缺)",
+          "isCompleted": false
+        }
+      ],
+      "position": {
+        "x": 600,
+        "y": -400
+      }
+    },
+    {
+      "id": "a0ceaea7-f934-481e-b71b-593b7b71e9ea",
+      "content": "第四阶段：巅峰状态 (Weeks 15+)",
+      "parentIds": [
+        "ea5f4985-a5f6-41a2-89c2-78961fe087d6"
+      ],
+      "isCompleted": false,
+      "createdAt": "2026-02-08T19:39:52.104Z",
+      "isToday": false,
+      "priority": "P2",
+      "startDate": "2026-02-08",
+      "subGoals": [
+        {
+          "id": "ea89866e-14c8-418d-844c-cf3a176418dd",
+          "content": "生物钟调节：上午理综/语文，下午数学/英语",
+          "isCompleted": false
+        },
+        {
+          "id": "f0d7e22e-2bb6-4359-a0f1-daed10b56e04",
+          "content": "回归课本：不再做新题，复习概念与错题",
+          "isCompleted": false
+        },
+        {
+          "id": "2a292684-c840-4ae0-b9ab-1e4802369ff5",
+          "content": "心态建设：接纳焦虑，维持皮质醇水平",
+          "isCompleted": false
+        }
+      ],
+      "position": {
+        "x": 900,
+        "y": -600
+      }
+    }
+  ],
+  "activeGoalId": "81b92344-31b5-4646-9c80-5a1555a556e3",
+  "dailyLogs": [],
+  "taskOrder": [
+    "81b92344-31b5-4646-9c80-5a1555a556e3",
+    "e9306f77-7931-4336-9298-9db604bdf389",
+    "ea5f4985-a5f6-41a2-89c2-78961fe087d6",
+    "a0ceaea7-f934-481e-b71b-593b7b71e9ea"
+  ],
+  "hudItems": [],
+  "dashboardViewMode": "stairs",
+  "viewMode": "diagonal",
+  "stairStyle": "ethereal",
+  "environment": "mountain",
+  "colorTheme": "bamboo",
+  "weatherOverride": null,
+  "exportedAt": "2026-02-08T19:39:52.104Z",
+  "currentGoal": "第一阶段：系统重装与去噪 (Weeks 1-3)",
+  "completedGoals": []
+}
