@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls, useMotionValue } from 'framer-motion';
 import { 
@@ -398,6 +398,20 @@ const TaskHUDComponent = ({ onOpenMap, onOpenOverview, isStandalone = false }: T
 
     const [isMinimized, setIsMinimized] = useState(false);
 
+    const [isElectron, setIsElectron] = useState(false);
+
+    useEffect(() => {
+        // Detect Electron environment
+        const checkElectron = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            if (userAgent.indexOf(' electron/') > -1) return true;
+             // @ts-ignore
+            if (window.navigator && window.navigator.userAgent && window.navigator.userAgent.indexOf('Electron') !== -1) return true;
+            return false;
+        };
+        setIsElectron(checkElectron());
+    }, []);
+
     // Resize Handlers
     const startResize = (e: React.MouseEvent) => {
         if (isStandalone) return;
@@ -515,7 +529,7 @@ const TaskHUDComponent = ({ onOpenMap, onOpenOverview, isStandalone = false }: T
                         </span>
                     </h3>
                     <div className="flex items-center gap-1">
-                        {!isStandalone && (
+                        {!isStandalone && isElectron && (
                             <button 
                                 onClick={handlePopOut}
                                 onPointerDown={(e) => e.stopPropagation()}

@@ -1,7 +1,7 @@
 # Ascension Stairs - 中文说明文档
 
 ## 1. 项目简介
-这是一个基于 **React** + **Vite** + **Electron** 的目标管理软件。支持无限层级的子目标拆分、可视化节点编辑以及全屏沉浸式体验。
+这是一个基于 **React** + **Vite** + **Electron** 的目标管理软件。支持无限层级的子目标拆分、可视化节点编辑、时间线安排日程、随手唤出的任务板以及全屏沉浸式体验。
 
 ## 2. 软件架构
 本项目采用 **Web 混合架构**：
@@ -23,17 +23,20 @@ npm run dev
 ```
 此时打开浏览器访问 `http://localhost:5173` 即可看到修改效果。
 
-### 生产环境打包 (生成 .exe)
-1. 确保所有终端已关闭或空闲。
-2. 运行以下命令：
-```bash
-npm run electron:build
+### 生产环境打包 (生成 .exe 安装包)
+1. 在项目根目录打开 PowerShell 终端。
+2. 运行自动化打包脚本：
+```powershell
+.\package.ps1
 ```
-3. 等待构建完成。
-4. 在 `AscensionStairs-Release` 文件夹中找到 `AscensionStairs.exe`。
+3. 等待构建完成，文件夹会自动打开。
+4. 在 `dist-electron` 文件夹中找到安装包（例如 `Ascension Stairs Setup 0.0.0.exe`）。
+
+> **💡 小贴士：免安装快速测试**
+> 如果您不想安装，可以直接进入 `dist-electron/win-unpacked` 文件夹，双击 `Ascension Stairs.exe` 直接运行软件。这对于开发测试非常方便！
 
 ## 5. 常见问题
 *   **为什么修改代码后软件没变？**
-    *   因为软件运行的是打包后的静态文件。请务必运行 `npm run electron:build` 重新生成。
+    *   因为软件运行的是打包后的静态文件。请务必运行 `.\package.ps1` 重新生成安装包。
 *   **如何修改目标名称？**
     *   双击目标文字即可进入编辑模式，按 Enter 保存。

@@ -16,8 +16,12 @@ import {
 } from '@dnd-kit/sortable';
 import { useTaskQueue } from './hooks/useTaskQueue';
 import { useGameStore } from './store/gameStore';
+import { useStoreSync } from './hooks/useStoreSync';
 
 export const CmdCenterWindow = () => {
+    // Enable Cross-Window State Sync
+    useStoreSync();
+
     const { taskQueue, updateOrder } = useTaskQueue();
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
     const { goals } = useGameStore();

@@ -2,6 +2,8 @@
   "name": "ascension-stairs",
   "private": true,
   "version": "0.0.0",
+  "author": "Ascension Team",
+  "description": "A gamified goal management application",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -23,7 +25,13 @@
       "electron/**/*"
     ],
     "win": {
-      "target": "dir"
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   },
   "devDependencies": {

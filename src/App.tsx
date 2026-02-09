@@ -15,9 +15,13 @@ import { TaskItem, useTaskQueue } from './hooks/useTaskQueue';
 import { ScheduleOverview } from './components/ScheduleOverview';
 import { TimelineOverlay } from './components/TimelineOverlay';
 import { CmdCenterWindow } from './CmdCenterWindow';
+import { useStoreSync } from './hooks/useStoreSync';
 
 function App() {
   const [isCmdCenter] = useState(() => window.location.hash.includes('cmd-center'));
+  
+  // Enable Cross-Window State Sync
+  useStoreSync();
 
   if (isCmdCenter) {
       return <CmdCenterWindow />;
